@@ -1,0 +1,42 @@
+FROM ubuntu:16.04
+
+ARG UID=1000
+ARG GID=1000
+ARG SECRET=secret
+
+USER root
+
+#========================
+# Miscellaneous packages
+#========================
+RUN apt-get update -qqy \
+  && apt-get -qqy --no-install-recommends install \
+    sudo \
+    openjdk-8-jdk \
+    tar \
+    zip xz-utils \
+    curl wget \
+    git \
+    build-essential \
+    python \
+    iputils-ping \
+  && rm -rf /var/lib/apt/lists/* \
+  && sed -i 's/securerandom\.source=file:\/dev\/random/securerandom\.source=file:\/dev\/urandom/' ./usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/java.security
+
+#========================================
+# Add normal user with passwordless sudo
+#========================================
+RUN sudo groupadd -r -g $GID ndgit \
+  && sudo useradd ndgit -g $GID -u $UID --shell /bin/bash --create-home \
+  && sudo usermod -a -G sudo ndgit \
+  && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
+  && echo 'ndgit:$SECRET' | chpasswd
+
+USER ndgit
+WORKDIR /home/ndgit
+
+#========================================
+# Configure the local git user.
+#========================================
+RUN git config --global user.name "NDGIT Developer"
+RUN git config --global user.email developer@ndgit.com
