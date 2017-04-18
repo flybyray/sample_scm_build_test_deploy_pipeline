@@ -6,19 +6,17 @@ properties([buildDiscarder(logRotator(artifactNumToKeepStr: '20', numToKeepStr: 
 node {
     def dockerTool = tool name: 'Default', type: 'org.jenkinsci.plugins.docker.commons.tools.DockerTool'
     stage('checkout and prepare build environment') {
-        steps {
-            checkout([$class                           : 'GitSCM',
-                      branches                         : [[name: '*/master']],
-                      doGenerateSubmoduleConfigurations: false,
-                      extensions                       : [[$class: 'CleanCheckout']],
-                      submoduleCfg                     : [],
-                      userRemoteConfigs                : [[url: 'https://github.com/flybyray/sample_scm_build_test_deploy_pipeline.git']]])
-            withCredentials([[$class       : 'StringBinding',
-                              credentialsId: 'ndgitSecret',
-                              variable     : 'SECRET']]) {
-                withEnv(["PATH+DOCKER=${dockerTool}/bin"]) {
-                    sh 'docker build -t gs_build_env --build-arg GID=$(id -g ${USER}) --build-arg UID=$(id -u ${USER}) --build-arg SECRET=${SECRET} - < Dockerfile.build'
-                }
+        checkout([$class                           : 'GitSCM',
+                  branches                         : [[name: '*/master']],
+                  doGenerateSubmoduleConfigurations: false,
+                  extensions                       : [[$class: 'CleanCheckout']],
+                  submoduleCfg                     : [],
+                  userRemoteConfigs                : [[url: 'https://github.com/flybyray/sample_scm_build_test_deploy_pipeline.git']]])
+        withCredentials([[$class       : 'StringBinding',
+                          credentialsId: 'ndgitSecret',
+                          variable     : 'SECRET']]) {
+            withEnv(["PATH+DOCKER=${dockerTool}/bin"]) {
+                sh 'docker build -t gs_build_env --build-arg GID=$(id -g ${USER}) --build-arg UID=$(id -u ${USER}) --build-arg SECRET=${SECRET} - < Dockerfile.build'
             }
         }
     }
