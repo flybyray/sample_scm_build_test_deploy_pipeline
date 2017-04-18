@@ -6,8 +6,14 @@ properties([buildDiscarder(logRotator(artifactNumToKeepStr: '20', numToKeepStr: 
 pipeline {
     agent any
     stages {
-        stage('prepare build image') {
+        stage('checkout and prepare build environment') {
             steps {
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/master']],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [[$class: 'CleanCheckout']],
+                          submoduleCfg: [],
+                          userRemoteConfigs: [[url: 'https://github.com/flybyray/sample_scm_build_test_deploy_pipeline.git']]])
                 withCredentials([[$class       : 'StringBinding',
                                   credentialsId: 'ndgitSecret',
                                   variable     : 'SECRET']]) {
