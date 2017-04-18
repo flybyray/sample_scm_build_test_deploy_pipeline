@@ -6,11 +6,8 @@ properties([buildDiscarder(logRotator(artifactNumToKeepStr: '20', numToKeepStr: 
 pipeline {
     agent any
     stages {
-        stage('Checkout') {
+        stage('prepare build image') {
             steps {
-                deleteDir()
-                checkout scm
-                // sh 'git submodule update --init'
                 withCredentials([[$class       : 'StringBinding',
                                   credentialsId: 'ndgitSecret',
                                   variable     : 'SECRET']]) {
