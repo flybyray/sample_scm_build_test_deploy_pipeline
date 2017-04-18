@@ -17,7 +17,8 @@ pipeline {
                 withCredentials([[$class       : 'StringBinding',
                                   credentialsId: 'ndgitSecret',
                                   variable     : 'SECRET']]) {
-                    withEnv(['PATH+BIN_DIR=${JENKINS_HOME}/bin']) {
+                    def dockerTool = tool name: 'Default', type: 'org.jenkinsci.plugins.docker.commons.tools.DockerTool'
+                    withEnv(['PATH+DOCKER=${dockerTool}/bin']) {
                         sh 'docker build -t gs_build_env --build-arg GID=$(id -g ${USER}) --build-arg UID=$(id -u ${USER}) --build-arg SECRET=${SECRET} - < Dockerfile.build'
                     }
                 }
