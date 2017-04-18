@@ -22,22 +22,24 @@ node {
     }
     stage('build and ') {
         configFileProvider([configFile(fileId: 'ndgit-maven-settings', targetLocation: 'settings.xml')]) {
-            docker.image('ndgit_build_env').inside {
-                withEnv(['GIT_AUTHOR_NAME=Jenkins', 'GIT_AUTHOR_EMAIL=jenkins@ndgit.com']) {
-                    try {
-                        sh "mvn clean install -s settings.xml"
-                        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
-                        step([$class: 'ArtifactArchiver', artifacts: '*/target/*.jar'])
+            withEnv(["PATH+DOCKER=${dockerTool}/bin"]) {
+                docker.image('ndgit_build_env').inside {
+                    withEnv(['GIT_AUTHOR_NAME=Jenkins', 'GIT_AUTHOR_EMAIL=jenkins@ndgit.com']) {
+                        try {
+                            sh "mvn clean install -s settings.xml"
+                            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
+                            step([$class: 'ArtifactArchiver', artifacts: '*/target/*.jar'])
 
-                        triggerAcceptanceTest()
-                    } catch (err) {
-                        currentBuild.result = "FAILURE"
+                            triggerAcceptanceTest()
+                        } catch (err) {
+                            currentBuild.result = "FAILURE"
 
-                        if (err.toString().contains('AbortException')) {
-                            currentBuild.result = "ABORTED"
+                            if (err.toString().contains('AbortException')) {
+                                currentBuild.result = "ABORTED"
+                            }
+                        } finally {
+                            sendMail()
                         }
-                    } finally {
-                        sendMail()
                     }
                 }
             }
@@ -65,7 +67,7 @@ def triggerAcceptanceTest() {
 
 def sendMail() {
     res = currentBuild.result
-    if(currentBuild.result == null) {
+    if (currentBuild.result == null) {
         res = "SUCCESS"
     }
     message = "${env.JOB_NAME} #${env.BUILD_NUMBER}, status: ${res} (<a href='${env.RUN_DISPLAY_URL}'>Open</a>)"
